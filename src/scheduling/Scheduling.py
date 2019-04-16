@@ -2,6 +2,7 @@
 
 from enum import IntEnum, auto
 import random
+import copy
 
 class Location(IntEnum):
     A = auto()
@@ -21,16 +22,27 @@ class Occupation(IntEnum):
     F = auto()
     G = auto()
 
+class TimeRange(object):
+
+    def __init__(self, begin_time, end_time):
+        self.begin = begin_time
+        self.end = end_time
+
+    def overlappedTo(self, other):
+        if(not isinstance(other, TimeRange)):
+            return False
+
+        return self.begin >= other.end or self.end <= other.begin
+
 class Matter(object):
 
     def __init__(self, location, occupation_map, begin_time, end_time):
         self.location = location
         self.occupation_map = occupation_map
-        self.begin_time = begin_time
-        self.end_time = end_time
+        self.time_range = TimeRange(begin_time, end_time)
 
     def __str__(self):
-        return f'matter: {self.begin_time} - {self.end_time} location: {self.location}'
+        return f'matter: {self.time_range.begin} - {self.time_range.end} location: {self.location}'
 
 class Person(object):
 
@@ -43,6 +55,8 @@ class Person(object):
         self.id = self.__next_id[occupation]
         self.__next_id[occupation] += 1
 
+        self.assigndTimes = []
+
     @classmethod
     def __initialize_id(self):
         if(self.__next_id is not None):
@@ -52,6 +66,8 @@ class Person(object):
         for occupation in Occupation:
             self.__next_id[occupation] = 0
 
+    def assignTo(self, matter):
+        self.assigndTimes.append(matter.time_range)
 
 class Schedule(object):
 
@@ -72,24 +88,17 @@ class Schedule(object):
 
     def __init__(self):
         self.__create_schedule_list()
-        self.__create_random_schedule()
 
     def __create_schedule_list(self):
         self.list_map = {}
         for occupation in Occupation:
             self.list_map[occupation] = []
-            for matter in self.matters:
-                self.list_map[occupation].extend([0 for _ in range(matter.occupation_map[occupation])])
-
-    def __create_random_schedule(self):
-        for occupation in Occupation:
-            occupation_list = self.list_map[occupation]
             person_count = self.occupation_person_count[occupation]
-            if(person_count == 0):
-                continue
 
-            for i in range(len(occupation_list)):
-                occupation_list[i] = random.randint(0, person_count - 1)
+            for matter in self.matters:
+                assigned_persons = [random.randint(0, person_count - 1) \
+                    for _ in range(matter.occupation_map[occupation])]
+                self.list_map[occupation].extend(assigned_persons)
 
     def __eval_duplicate(self):
         duplicate = 0
@@ -103,6 +112,8 @@ class Schedule(object):
                 begin = end
 
         return duplicate
+
+#    def __eval_overlap(self):
 
 
     def evaluate(self):
