@@ -48,12 +48,15 @@ class Person(object):
 
     __next_id = None
 
-    def __init__(self, occupation):
+    def __init__(self, occupation, id = None):
         self.__initialize_id()
 
         self.occupation = occupation
-        self.id = self.__next_id[occupation]
-        self.__next_id[occupation] += 1
+        if(id is None):
+            self.id = self.__next_id[occupation]
+            self.__next_id[occupation] += 1
+        else:
+            self.id = id
 
         self.assigndTimes = []
 
@@ -69,55 +72,51 @@ class Person(object):
     def assignTo(self, matter):
         self.assigndTimes.append(matter.time_range)
 
+    def clone(self):
+        return Person(self.occupation, self.id)
+
+#    def judge_overlapp(self):
+
+
 class Schedule(object):
 
     matters = None
     persons = None
-    occupation_person_count = {}
 
     @classmethod
     def initialise(cls, matters, persons):
         cls.matters = matters
         cls.persons = persons
-        for occupation in Occupation:
-            cls.occupation_person_count[occupation] = 0
-
-        for person in cls.persons:
-            cls.occupation_person_count[person.occupation] += 1
-
 
     def __init__(self):
+        self.__create_person_map()
         self.__create_schedule_list()
+
+    def __create_person_map(self):
+        self.person_map = {}
+        for occupation in Occupation:
+            self.person_map[occupation] = []
+
+        for person in self.persons:
+            self.person_map[person.occupation].append(person)
 
     def __create_schedule_list(self):
         self.list_map = {}
         for occupation in Occupation:
             self.list_map[occupation] = []
-            person_count = self.occupation_person_count[occupation]
 
             for matter in self.matters:
-                assigned_persons = [random.randint(0, person_count - 1) \
-                    for _ in range(matter.occupation_map[occupation])]
+                assigned_persons = random.sample(self.person_map[occupation], matter.occupation_map[occupation])
+                for assigned_person in assigned_persons:
+                    assigned_person.assignTo(matter)
+
                 self.list_map[occupation].extend(assigned_persons)
-
-    def __eval_duplicate(self):
-        duplicate = 0
-        for occupation in Occupation:
-            begin = 0
-            for matter in self.matters:
-                end = begin + matter.occupation_map[occupation]
-                matter_list = self.list_map[occupation][begin:end]
-                dup_list = [x for x in set(matter_list) if matter_list.count(x) > 1]
-                duplicate += len(dup_list)
-                begin = end
-
-        return duplicate
 
 #    def __eval_overlap(self):
 
 
     def evaluate(self):
-        return self.__eval_duplicate()
+        return self.__eval_overlap()
 
     def console_out(self):
         iterators = {}
