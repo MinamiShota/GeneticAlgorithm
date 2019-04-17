@@ -186,18 +186,18 @@ class Schedule(object):
                     print(next(iterators[occupation]), end=" ")
                 print()
 
-#     def try_mutate(self, prob):
-#         for occupation in Occupation:
-#             for x in range(len(self.list_map[occupation])):
-
-
+    def try_mutate(self, prob):
+        for occupation in Occupation:
+            for x in range(len(self.list_map[occupation])):
+                if(random.random() < prob):
+                    self.list_map[occupation][x] = random.sample(self.person_map[occupation], 1)[0]
 
 def create_matters():
     matters = []
     locations = [loc for loc in Location]
     person_count = range(3)
 
-    for _ in range(20):
+    for _ in range(1):
         location = random.choice(locations)
         occupation_map = {}
         for occupation in Occupation:
@@ -220,12 +220,10 @@ def create_persons():
 def create_schedules():
     Schedule.initialise(create_matters(), create_persons())
     schedules = [Schedule() for _ in range(100)]
-#     schedule = Schedule()
-#     schedules = [Schedule(schedule.list_map) for _ in range(5)]
     for schedule in schedules:
-#         schedule.assign_person()
 #         schedule.console_out()
         schedule.evaluate()
         print(schedule.fitness)
 
     return schedules
+
