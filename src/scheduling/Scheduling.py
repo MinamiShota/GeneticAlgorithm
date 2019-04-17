@@ -96,7 +96,7 @@ class Person(object):
         return 0 if distance < 1 else distance - 1
 
     def __str__(self):
-        return f'Person: id={self.id} assigned_matters={[x.__str__() for x in self.assigned_matters]}'
+        return f'Person: id={self.id} occupation={self.occupation} assigned_matters={[x.__str__() for x in self.assigned_matters]}'
 
 class Schedule(object):
 
@@ -171,7 +171,7 @@ class Schedule(object):
         return - distance
 
     def evaluate(self):
-        self.fitness = self.__eval_overlap() * 10 + self.__eval_distance()
+        self.fitness = self.__eval_overlap() * 100 + self.__eval_distance()
 
     def console_out(self):
         iterators = {}
@@ -191,6 +191,11 @@ class Schedule(object):
         for occupation in Occupation:
             print([person.__str__() for person in self.list_map[occupation]])
 
+    def console_out_persons(self):
+        for occupation in Occupation:
+            for person in self.person_map[occupation]:
+                print(person.__str__())
+
     def try_mutate(self, prob):
         for occupation in Occupation:
             for x in range(len(self.list_map[occupation])):
@@ -209,15 +214,22 @@ def create_matters():
     matters = []
     locations = [loc for loc in Location]
     person_count = range(3)
+    probs = [1, 4, 10, 20, 100]
 
-    for _ in range(20):
+    for _ in range(40):
         location = random.choice(locations)
         occupation_map = {}
         for occupation in Occupation:
             occupation_map[occupation] = random.choice(person_count)
-        time = random.sample(times, 2)
-        begin_time = min(time)
-        end_time = max(time)
+
+        rd = random.randint(0, 99)
+        for x in range(len(probs)):
+            if(rd < probs[x]):
+                index = random.randint(0, x)
+                begin_time = times[index]
+                end_time = times[index + len(times) - 1 - x]
+                break
+
         matters.append(Matter(location, occupation_map, begin_time, end_time))
 
     return matters
@@ -236,7 +248,7 @@ def create_schedules():
     for schedule in schedules:
 #         schedule.console_out()
         schedule.evaluate()
-        print(schedule.fitness)
+#         print(schedule.fitness)
 
     return schedules
 
