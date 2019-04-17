@@ -2,7 +2,6 @@
 
 from enum import IntEnum, auto
 import random
-import copy
 
 class Location(IntEnum):
     A = auto()
@@ -32,7 +31,13 @@ class TimeRange(object):
         if(not isinstance(other, TimeRange)):
             return False
 
-        return self.begin >= other.end or self.end <= other.begin
+        return self.begin < other.end and self.end > other.begin
+
+    def __str__(self):
+        return f'{self.begin}-{self.end}'
+
+times = [10, 12, 14, 16, 18, 20]
+time_ranges = [TimeRange(times[x], times[x + 1]) for x in range(len(times) - 1)]
 
 class Matter(object):
 
@@ -42,23 +47,23 @@ class Matter(object):
         self.time_range = TimeRange(begin_time, end_time)
 
     def __str__(self):
-        return f'matter: {self.time_range.begin} - {self.time_range.end} location: {self.location}'
+        return f'matter: {self.time_range.__str__()} location: {self.location}'
 
 class Person(object):
 
     __next_id = None
 
-    def __init__(self, occupation, id = None):
+    def __init__(self, occupation, person_id = None):
         self.__initialize_id()
 
         self.occupation = occupation
-        if(id is None):
+        if(person_id is None):
             self.id = self.__next_id[occupation]
             self.__next_id[occupation] += 1
         else:
-            self.id = id
+            self.id = person_id
 
-        self.assigndTimes = []
+        self.assigned_matters = []
 
     @classmethod
     def __initialize_id(self):
@@ -70,13 +75,27 @@ class Person(object):
             self.__next_id[occupation] = 0
 
     def assignTo(self, matter):
-        self.assigndTimes.append(matter.time_range)
+        self.assigned_matters.append(matter)
 
     def clone(self):
         return Person(self.occupation, self.id)
 
-#    def judge_overlapp(self):
+    def judge_overlap(self, overlap_list):
+        for x in range(len(time_ranges)):
+            overlap = 0
+            for assigned_matter in self.assigned_matters:
+                overlap += 1 if assigned_matter.time_range.overlappedTo(time_ranges[x]) else 0
 
+            overlap_list[x] += 0 if overlap <= 1 else overlap - 1
+
+    def judge_distance(self):
+        assigned_locations = [x.location for x in self.assigned_matters]
+        location_count = [assigned_locations.count(location) for location in Location]
+        distance = sum([ 1 if count > 0 else 0 for count in location_count])
+        return 0 if distance < 1 else distance - 1
+
+    def __str__(self):
+        return f'Person: id={self.id} assigned_time={[x.__str__() for x in self.assigned_matters]}'
 
 class Schedule(object):
 
@@ -98,7 +117,7 @@ class Schedule(object):
             self.person_map[occupation] = []
 
         for person in self.persons:
-            self.person_map[person.occupation].append(person)
+            self.person_map[person.occupation].append(person.clone())
 
     def __create_schedule_list(self):
         self.list_map = {}
@@ -112,11 +131,25 @@ class Schedule(object):
 
                 self.list_map[occupation].extend(assigned_persons)
 
-#    def __eval_overlap(self):
+    def __eval_overlap(self):
+        overlap_list = [0 for _ in range(len(time_ranges))]
 
+        for occupation in Occupation:
+            for person in self.person_map[occupation]:
+                person.judge_overlap(overlap_list);
+
+        return - sum(overlap_list)
+
+    def __eval_distance(self):
+        distance = 0;
+        for occupation in Occupation:
+            for person in self.person_map[occupation]:
+                distance += person.judge_distance()
+
+        return - distance
 
     def evaluate(self):
-        return self.__eval_overlap()
+        self.fitness = self.__eval_overlap() * 10 + self.__eval_distance()
 
     def console_out(self):
         iterators = {}
@@ -136,7 +169,6 @@ def create_matters():
     matters = []
     locations = [loc for loc in Location]
     person_count = range(3)
-    times = [10, 12, 14, 16, 18, 20]
 
     for _ in range(20):
         location = random.choice(locations)
@@ -160,10 +192,8 @@ def create_persons():
 
 def main():
     Schedule.initialise(create_matters(), create_persons())
-    schedules = [Schedule() for _ in range(100)]
+    schedules = [Schedule() for _ in range(10)]
     for schedule in schedules:
-        schedule.console_out()
-        print(schedule.evaluate())
-
-if __name__ == "__main__":
-    main()
+#        schedule.console_out()
+        schedule.evaluate()
+#        print(schedule.fitness)
