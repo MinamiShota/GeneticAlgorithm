@@ -95,7 +95,7 @@ class Person(object):
         return 0 if distance < 1 else distance - 1
 
     def __str__(self):
-        return f'Person: id={self.id} assigned_time={[x.__str__() for x in self.assigned_matters]}'
+        return f'Person: id={self.id} assigned_matters={[x.__str__() for x in self.assigned_matters]}'
 
 class Schedule(object):
 
@@ -110,6 +110,7 @@ class Schedule(object):
     def __init__(self):
         self.__create_person_map()
         self.__create_schedule_list()
+        self.__assign_person()
 
     def __create_person_map(self):
         self.person_map = {}
@@ -126,10 +127,22 @@ class Schedule(object):
 
             for matter in self.matters:
                 assigned_persons = random.sample(self.person_map[occupation], matter.occupation_map[occupation])
-                for assigned_person in assigned_persons:
-                    assigned_person.assignTo(matter)
 
                 self.list_map[occupation].extend(assigned_persons)
+
+    def __assign_person(self):
+        for occupation in Occupation:
+            assigned_list= self.list_map[occupation]
+            begin = 0
+
+            for matter in self.matters:
+                assigned_count = matter.occupation_map[occupation]
+                matter_assigned_list = assigned_list[begin:begin + assigned_count]
+                for person in matter_assigned_list:
+                    person.assignTo(matter)
+
+                begin += assigned_count
+
 
     def __eval_overlap(self):
         overlap_list = [0 for _ in range(len(time_ranges))]
@@ -165,6 +178,10 @@ class Schedule(object):
                     print(next(iterators[occupation]), end=" ")
                 print()
 
+#    def try_mutate(self, prob):
+
+
+
 def create_matters():
     matters = []
     locations = [loc for loc in Location]
@@ -190,10 +207,12 @@ def create_persons():
 
     return persons
 
-def main():
+def create_schedules():
     Schedule.initialise(create_matters(), create_persons())
-    schedules = [Schedule() for _ in range(10)]
+    schedules = [Schedule() for _ in range(100)]
     for schedule in schedules:
 #        schedule.console_out()
         schedule.evaluate()
-#        print(schedule.fitness)
+        print(schedule.fitness)
+
+    return schedules
