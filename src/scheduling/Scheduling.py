@@ -2,6 +2,7 @@
 
 from enum import IntEnum, auto
 import random
+from deap import tools
 
 class Location(IntEnum):
     A = auto()
@@ -186,18 +187,30 @@ class Schedule(object):
                     print(next(iterators[occupation]), end=" ")
                 print()
 
+    def console_out_simple(self):
+        for occupation in Occupation:
+            print([person.__str__() for person in self.list_map[occupation]])
+
     def try_mutate(self, prob):
         for occupation in Occupation:
             for x in range(len(self.list_map[occupation])):
                 if(random.random() < prob):
                     self.list_map[occupation][x] = random.sample(self.person_map[occupation], 1)[0]
 
+def try_mate(schedules, prob):
+    for child1, child2 in zip(schedules[::2], schedules[1::2]):
+
+        if random.random() < prob:
+            for occupation in Occupation:
+                tools.cxTwoPoint(child1.list_map[occupation], child2.list_map[occupation])
+
+
 def create_matters():
     matters = []
     locations = [loc for loc in Location]
     person_count = range(3)
 
-    for _ in range(1):
+    for _ in range(20):
         location = random.choice(locations)
         occupation_map = {}
         for occupation in Occupation:
