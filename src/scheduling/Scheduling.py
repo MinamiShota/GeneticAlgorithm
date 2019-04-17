@@ -107,10 +107,13 @@ class Schedule(object):
         cls.matters = matters
         cls.persons = persons
 
-    def __init__(self):
+    def __init__(self, list_map = None):
         self.__create_person_map()
-        self.__create_schedule_list()
-        self.__assign_person()
+        if(list_map == None):
+            self.__create_schedule_list()
+            self.assign_person()
+        else:
+            self.__create_schedule_list(list_map)
 
     def __create_person_map(self):
         self.person_map = {}
@@ -120,17 +123,22 @@ class Schedule(object):
         for person in self.persons:
             self.person_map[person.occupation].append(person.clone())
 
-    def __create_schedule_list(self):
+    def __create_schedule_list(self, list_map = None):
         self.list_map = {}
         for occupation in Occupation:
             self.list_map[occupation] = []
 
-            for matter in self.matters:
-                assigned_persons = random.sample(self.person_map[occupation], matter.occupation_map[occupation])
+            if(list_map == None):
+                for matter in self.matters:
+                    assigned_persons = random.sample(self.person_map[occupation], matter.occupation_map[occupation])
 
-                self.list_map[occupation].extend(assigned_persons)
+                    self.list_map[occupation].extend(assigned_persons)
 
-    def __assign_person(self):
+            else:
+                self.list_map[occupation].extend([[x for x in self.person_map[occupation] if x.id == person.id][0]\
+                                                   for person in list_map[occupation]])
+
+    def assign_person(self):
         for occupation in Occupation:
             assigned_list= self.list_map[occupation]
             begin = 0
@@ -178,7 +186,9 @@ class Schedule(object):
                     print(next(iterators[occupation]), end=" ")
                 print()
 
-#    def try_mutate(self, prob):
+#     def try_mutate(self, prob):
+#         for occupation in Occupation:
+#             for x in range(len(self.list_map[occupation])):
 
 
 
@@ -210,8 +220,11 @@ def create_persons():
 def create_schedules():
     Schedule.initialise(create_matters(), create_persons())
     schedules = [Schedule() for _ in range(100)]
+#     schedule = Schedule()
+#     schedules = [Schedule(schedule.list_map) for _ in range(5)]
     for schedule in schedules:
-#        schedule.console_out()
+#         schedule.assign_person()
+#         schedule.console_out()
         schedule.evaluate()
         print(schedule.fitness)
 
