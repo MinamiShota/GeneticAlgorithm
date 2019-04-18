@@ -208,6 +208,10 @@ def try_mate(schedules, prob):
         if random.random() < prob:
             for occupation in Occupation:
                 tools.cxTwoPoint(child1.list_map[occupation], child2.list_map[occupation])
+                child1.list_map[occupation] = [[x for x in child1.person_map[occupation] if x.id == person.id][0]\
+                                                 for person in child1.list_map[occupation]]
+                child2.list_map[occupation] = [[x for x in child2.person_map[occupation] if x.id == person.id][0]\
+                                                 for person in child2.list_map[occupation]]
 
 
 def create_matters():
@@ -216,7 +220,7 @@ def create_matters():
     person_count = range(3)
     probs = [1, 4, 10, 20, 100]
 
-    for _ in range(40):
+    for _ in range(30):
         location = random.choice(locations)
         occupation_map = {}
         for occupation in Occupation:
