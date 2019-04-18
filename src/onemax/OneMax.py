@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import random
+import datetime
 
 from deap import base
 from deap import creator
@@ -43,7 +44,7 @@ toolbox.register("select", tools.selTournament, tournsize = 3)
 # メイン関数
 def main():
     random.seed(64)
-
+    start = datetime.datetime.now()
     # 最初世代の個体
     pop = toolbox.create_population(n = 300)
 
@@ -69,6 +70,10 @@ def main():
     # 世代数
     g = 0
 
+    means = []
+    mins = []
+    maxs = []
+
     # 最初分の統計量を計算して表示
     length = len(pop)
     mean = sum(fits) / length
@@ -79,6 +84,10 @@ def main():
     print("  Max %s" % max(fits))
     print("  Avg %s" % mean)
     print("  Std %s" % std)
+
+    means.append(mean)
+    mins.append(min(fits))
+    maxs.append(max(fits))
 
     # 世代更新開始
     # 適応度が 100 を超える（まあそれが答えだからね...）やつが現れるか、
@@ -138,11 +147,22 @@ def main():
         print("  Avg %s" % mean)
         print("  Std %s" % std)
 
+        means.append(mean)
+        mins.append(min(fits))
+        maxs.append(max(fits))
+
     print("-- End of (successful) evolution --")
 
     # fitness プロパティが最も良い 1 個体を選出
     best_ind = tools.selBest(pop, 1)[0]
     print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
+
+    end = datetime.datetime.now()
+    print(end - start)
+
+    print(maxs)
+    print(means)
+    print(mins)
 
 if __name__ == "__main__":
     main()
