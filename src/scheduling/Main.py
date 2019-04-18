@@ -10,7 +10,7 @@ from deap import tools
 import datetime
 
 def main():
-    random.seed(64)
+#     random.seed(64)
     schedules = Scheduling.create_schedules()
 
     cross_probability = 0.5
@@ -24,6 +24,10 @@ def main():
     g = 0
     fits = [schedule.fitness for schedule in schedules]
 
+    means = []
+    mins = []
+    maxs = []
+
     length = len(schedules)
     mean = sum(fits) / length
     sum2 = sum(x*x for x in fits)
@@ -34,12 +38,16 @@ def main():
     print("  Avg %s" % mean)
     print("  Std %s" % std)
 
-    while max(fits) < -100 and g < 1000:
+    means.append(mean)
+    mins.append(min(fits))
+    maxs.append(max(fits))
+
+    while max(fits) < 0 and g < 100:
         # 世代数更新
         g = g + 1
         print("-- Generation %i --" % g)
 
-        schedules = tools.selTournament(schedules, len(schedules), 5)
+        schedules = tools.selTournament(schedules, len(schedules), 10)
         schedules = [Scheduling.Schedule(s.list_map) for s in schedules]
 
         Scheduling.try_mate(schedules, cross_probability)
@@ -63,6 +71,10 @@ def main():
         print("  Avg %s" % mean)
         print("  Std %s" % std)
 
+        means.append(mean)
+        mins.append(min(fits))
+        maxs.append(max(fits))
+
     print("-- End of (successful) evolution --")
 
     best_ind = tools.selBest(schedules, 1)[0]
@@ -72,6 +84,10 @@ def main():
 
     end = datetime.datetime.now()
     print(end - start)
+
+    print(maxs)
+    print(means)
+    print(mins)
 
 if __name__ == '__main__':
     main()
